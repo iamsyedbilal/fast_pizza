@@ -7,12 +7,14 @@ export default function AppLayout() {
   const navigation = useNavigation()
   const loading = navigation.state === 'loading'
   return (
-    <div>
+    <div className="grid h-screen grid-rows-[auto_1fr_auto]">
       {loading && <Loader />}
       <Header />
-      <main>
-        <Outlet />
-      </main>
+      <div className="min-h-0 overflow-auto scroll-smooth">
+        <main className="mx-auto max-w-3xl">
+          <Outlet />
+        </main>
+      </div>
       <CartOverview />
     </div>
   )

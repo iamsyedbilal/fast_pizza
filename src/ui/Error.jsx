@@ -1,14 +1,18 @@
-import { useNavigate, useRouteError } from 'react-router-dom'
+import { useRouteError } from 'react-router-dom'
+import LinkButton from './LinkButton'
 
 function NotFound() {
-  const navigate = useNavigate()
   const error = useRouteError()
 
   return (
-    <div>
-      <h1>Something went wrong 😢</h1>
-      <p>{error.data || error.message}</p>
-      <button onClick={() => navigate(-1)}>&larr; Go back</button>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4 text-center">
+      <h1 className="mb-4 text-4xl font-bold text-stone-800">
+        Something went wrong 😢
+      </h1>
+      <p className="mb-6 text-stone-600">
+        {error?.data || error?.message || 'Page not found.'}
+      </p>
+      <LinkButton to="-1">&larr; Go back</LinkButton>
     </div>
   )
 }
