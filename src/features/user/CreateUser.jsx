@@ -23,8 +23,10 @@ function CreateUser() {
       />
 
       {username !== '' && (
-        <div>
-          <Button>Start ordering</Button>
+        <div className="mt-4">
+          <Button to={'/order/new'} type="primary">
+            Start ordering
+          </Button>
         </div>
       )}
     </form>
