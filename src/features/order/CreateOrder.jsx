@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { Form, redirect, useNavigation, useActionData } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { createOrder } from '../../services/apiRestaurant'
 import Button from '../../ui/Button'
 
@@ -38,6 +38,7 @@ function CreateOrder() {
   const isSubmitting = navigation.state === 'submitting'
   const cart = fakeCart
   const formErrors = useActionData()
+  const username = useSelector((state) => state.user.username)
 
   return (
     <div className="px-4 py-6 sm:px-6">
@@ -51,7 +52,13 @@ function CreateOrder() {
           <label className="text-sm font-medium text-stone-700">
             First Name
           </label>
-          <input type="text" name="customer" required className="input" />
+          <input
+            type="text"
+            name="customer"
+            defaultValue={username}
+            required
+            className="input"
+          />
         </div>
 
         {/* Phone */}

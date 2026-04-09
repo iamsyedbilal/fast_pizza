@@ -1,11 +1,20 @@
 import { useState } from 'react'
+import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
+import { updateUsername } from './userSlice'
 import Button from '../../ui/Button'
 
 function CreateUser() {
-  const [username, setUsername] = useState('bilal')
+  const [username, setUsername] = useState('')
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   function handleSubmit(e) {
     e.preventDefault()
+
+    if (!username) return
+    dispatch(updateUsername(username))
+    navigate('/menu')
   }
 
   return (
@@ -24,9 +33,7 @@ function CreateUser() {
 
       {username !== '' && (
         <div className="mt-4">
-          <Button to={'/order/new'} type="primary">
-            Start ordering
-          </Button>
+          <Button type="primary">Start ordering</Button>
         </div>
       )}
     </form>
