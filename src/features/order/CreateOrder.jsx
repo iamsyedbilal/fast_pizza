@@ -1,7 +1,13 @@
 import { Form, redirect, useNavigation, useActionData } from 'react-router-dom'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { createOrder } from '../../services/apiRestaurant'
 import Button from '../../ui/Button'
+import EmptyCart from '../cart/EmptyCart'
+import store from '../../store/store'
+import { clearCart } from '../cart/cartSlice'
+import { formatCurrency } from '../../utils/helpers'
+import { useState } from 'react'
+import { fetchAddress } from '../user/userSlice'
 
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
@@ -34,11 +40,29 @@ const fakeCart = [
 ]
 
 function CreateOrder() {
+  const [withPriority, setWithPriority] = useState(false)
   const navigation = useNavigation()
+  const dispatch = useDispatch()
   const isSubmitting = navigation.state === 'submitting'
-  const cart = fakeCart
+  // const cart = fakeCart
   const formErrors = useActionData()
-  const username = useSelector((state) => state.user.username)
+  const {
+    username,
+    status: addressStatus,
+    position,
+    address,
+    error: errorAddress,
+  } = useSelector((state) => state.user)
+  const isLoadingAddress = addressStatus === 'loading'
+  const cart = useSelector((state) => state.cart.cart)
+  const totalCartPrice = useSelector((state) =>
+    state.cart.cart.reduce((sum, curr) => sum + curr.totalPrice, 0),
+  )
+
+  const priorityPrice = withPriority ? totalCartPrice * 0.2 : 0
+  const totalPrice = totalCartPrice + priorityPrice
+
+  if (!cart.length) return <EmptyCart />
 
   return (
     <div className="px-4 py-6 sm:px-6">
@@ -78,7 +102,27 @@ function CreateOrder() {
         {/* Address */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-stone-700">Address</label>
-          <input type="text" name="address" required className="input" />
+
+          <div className="relative">
+            <input
+              type="text"
+              name="address"
+              required
+              className="input pr-24" // 👈 add right padding
+              disabled={isLoadingAddress}
+              value={address}
+              readOnly
+            />
+
+            <button
+              type="button"
+              disabled={isLoadingAddress}
+              onClick={() => dispatch(fetchAddress())}
+              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md bg-emerald-500 px-2 py-1 text-xs text-white hover:bg-emerald-600 disabled:bg-gray-400"
+            >
+              {isLoadingAddress ? '...' : 'Get'}
+            </button>
+          </div>
         </div>
 
         {/* Priority */}
@@ -88,6 +132,8 @@ function CreateOrder() {
             name="priority"
             id="priority"
             className="h-4 w-4 accent-emerald-500"
+            value={withPriority}
+            onChange={(e) => setWithPriority(e.target.checked)}
           />
           <label className="text-sm text-stone-700" htmlFor="priority">
             Want to give your order priority?
@@ -96,11 +142,22 @@ function CreateOrder() {
 
         {/* Hidden cart */}
         <input type="hidden" name="cart" value={JSON.stringify(cart)} />
+        <input
+          type="hidden"
+          name="position"
+          value={
+            position.longitude && position.latitude
+              ? `${position.latitude},${position.longitude}`
+              : ''
+          }
+        />
 
         {/* Submit */}
         <div>
           <Button disabled={isSubmitting} type="primary">
-            {isSubmitting ? 'Placing order...' : 'Order now'}
+            {isSubmitting
+              ? 'Placing order...'
+              : `Order Now From ${formatCurrency(totalPrice)}`}
           </Button>
         </div>
       </Form>
@@ -116,7 +173,7 @@ export async function createOrderAction({ request }) {
   const order = {
     ...data,
     cart: JSON.parse(data.cart),
-    priority: data.priority === 'on',
+    priority: data.priority === 'true',
   }
 
   const errors = {}
@@ -131,6 +188,8 @@ export async function createOrderAction({ request }) {
   // console.log(order)
 
   const createdOrder = await createOrder(order)
+
+  store.dispatch(clearCart())
 
   return redirect(`/order/${createdOrder.id}`)
 }
